@@ -29,15 +29,36 @@ export async function updateUser(data) {
 
         // If industry doesn't exist, create it with default values
         if (!industryInsight) {
-          const insights = await generateAIInsights(data.industry);
-
-          industryInsight = await db.industryInsight.create({
-            data: {
-              industry: data.industry,
-              ...insights,
-              nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            },
-          });
+          try {
+            const insights = await generateAIInsights(data.industry);
+            industryInsight = await db.industryInsight.create({
+              data: {
+                industry: data.industry,
+                ...insights,
+                nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              },
+            });
+          } catch (aiError) {
+            console.error("Failed to generate AI insights, using defaults:", aiError);
+            // Create with default insights if AI fails
+            industryInsight = await db.industryInsight.create({
+              data: {
+                industry: data.industry,
+                salaryRanges: [
+                  { role: "Junior", min: 50000, max: 80000 },
+                  { role: "Mid-level", min: 80000, max: 120000 },
+                  { role: "Senior", min: 120000, max: 180000 },
+                ],
+                growthRate: 10.0,
+                demandLevel: "Medium",
+                topSkills: ["Communication", "Problem Solving", "Teamwork"],
+                marketOutlook: "Stable market with growth opportunities",
+                keyTrends: ["Digital transformation", "Remote work", "Automation"],
+                recommendedSkills: ["Leadership", "Technical skills", "Adaptability"],
+                nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              },
+            });
+          }
         }
 
         // Now update the user
