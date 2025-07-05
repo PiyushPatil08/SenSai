@@ -4,19 +4,38 @@ import { getUserOnboardingStatus } from "@/actions/user";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  const { isOnboarded } = await getUserOnboardingStatus();
+  try {
+    const { isOnboarded } = await getUserOnboardingStatus();
 
-  // If not onboarded, redirect to onboarding page
-  // Skip this check if already on the onboarding page
-  if (!isOnboarded) {
-    redirect("/onboarding");
+    // If not onboarded, redirect to onboarding page
+    if (!isOnboarded) {
+      redirect("/onboarding");
+    }
+
+    const insights = await getIndustryInsights();
+
+    return (
+      <div className="container mx-auto">
+        <DashboardView insights={insights} />
+      </div>
+    );
+  } catch (error) {
+    console.error("Dashboard error:", error);
+    return (
+      <div className="container mx-auto py-10">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Something went wrong</h1>
+          <p className="text-muted-foreground">
+            {error.message || "Failed to load dashboard data"}
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
-
-  const insights = await getIndustryInsights();
-
-  return (
-    <div className="container mx-auto">
-      <DashboardView insights={insights} />
-    </div>
-  );
 }

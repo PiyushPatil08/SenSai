@@ -11,6 +11,11 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export async function generateRoadmap(role) {
   try {
+    // Check if GEMINI_API_KEY is available
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("AI service is not configured. Please check environment variables.");
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Unauthorized");
 
@@ -77,6 +82,12 @@ export async function generateRoadmap(role) {
     return roadmap;
   } catch (error) {
     console.error("Error generating roadmap:", error);
+    
+    // Check if it's an API key error
+    if (error.message?.includes('API_KEY') || error.message?.includes('authentication')) {
+      throw new Error("AI service authentication failed. Please check your API key.");
+    }
+    
     throw new Error(error.message || "Failed to generate roadmap");
   }
 }

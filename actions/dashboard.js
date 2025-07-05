@@ -9,6 +9,12 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export async function generateAIInsights(industry) {
+  // Check if GEMINI_API_KEY is available
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("GEMINI_API_KEY is not set");
+    throw new Error("AI service is not configured. Please check environment variables.");
+  }
+
   const prompt = `
     Generate industry insights for ${industry} in the following JSON format:
     {
@@ -34,6 +40,12 @@ export async function generateAIInsights(industry) {
     return JSON.parse(cleanedText);
   } catch (error) {
     console.error("Error generating insights:", error);
+    
+    // Check if it's an API key error
+    if (error.message?.includes('API_KEY') || error.message?.includes('authentication')) {
+      throw new Error("AI service authentication failed. Please check your API key.");
+    }
+    
     // Return default insights if AI generation fails
     return {
       salaryRanges: [
@@ -52,32 +64,37 @@ export async function generateAIInsights(industry) {
 }
 
 export async function getIndustryInsights() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) throw new Error("Unauthorized");
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) throw new Error("Unauthorized");
 
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    include: {
-      industryInsight: true,
-    },
-  });
-
-  if (!user) throw new Error("User not found");
-
-  // If no insights exist, generate them
-  if (!user.industryInsight) {
-    const insights = await generateAIInsights(user.industry);
-
-    const industryInsight = await db.industryInsight.create({
-      data: {
-        industry: user.industry,
-        ...insights,
-        nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        industryInsight: true,
       },
     });
 
-    return industryInsight;
-  }
+    if (!user) throw new Error("User not found");
 
-  return user.industryInsight;
+    // If no insights exist, generate them
+    if (!user.industryInsight) {
+      const insights = await generateAIInsights(user.industry);
+
+      const industryInsight = await db.industryInsight.create({
+        data: {
+          industry: user.industry,
+          ...insights,
+          nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+
+      return industryInsight;
+    }
+
+    return user.industryInsight;
+  } catch (error) {
+    console.error("Error in getIndustryInsights:", error);
+    throw new Error(`Failed to get industry insights: ${error.message}`);
+  }
 }
