@@ -30,5 +30,9 @@ export const features = [
     title: "Smart Resume Creation",
     description: "Generate ATS-optimized resumes with AI assistance.",
   },
-
+  {
+    icon: <Route className="w-10 h-10 mb-4 text-primary" />,
+    title: "Career Roadmap Generator",
+    description: "Create personalized career roadmaps with step-by-step guidance to achieve your goals.",
+  },
 ];

@@ -1,16 +1,17 @@
 "use server";
 
 import { db } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { generateAIInsights } from "./dashboard";
 
 export async function updateUser(data) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
+    where: { id: session.user.id },
   });
 
   if (!user) throw new Error("User not found");
@@ -68,11 +69,11 @@ export async function updateUser(data) {
 }
 
 export async function getUserOnboardingStatus() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
+    where: { id: session.user.id },
   });
 
   if (!user) throw new Error("User not found");
@@ -80,7 +81,7 @@ export async function getUserOnboardingStatus() {
   try {
     const user = await db.user.findUnique({
       where: {
-        clerkUserId: userId,
+        id: session.user.id,
       },
       select: {
         industry: true,

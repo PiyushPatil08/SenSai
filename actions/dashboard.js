@@ -1,47 +1,62 @@
 "use server";
 
 import { db } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-export const generateAIInsights = async (industry) => {
+export async function generateAIInsights(industry) {
   const prompt = `
-          Analyze the current state of the ${industry} industry and provide insights in ONLY the following JSON format without any additional notes or explanations:
-          {
-            "salaryRanges": [
-              { "role": "string", "min": number, "max": number, "median": number, "location": "string" }
-            ],
-            "growthRate": number,
-            "demandLevel": "High" | "Medium" | "Low",
-            "topSkills": ["skill1", "skill2"],
-            "marketOutlook": "Positive" | "Neutral" | "Negative",
-            "keyTrends": ["trend1", "trend2"],
-            "recommendedSkills": ["skill1", "skill2"]
-          }
-          
-          IMPORTANT: Return ONLY the JSON. No additional text, notes, or markdown formatting.
-          Include at least 5 common roles for salary ranges.
-          Growth rate should be a percentage.
-          Include at least 5 skills and trends.
-        `;
+    Generate industry insights for ${industry} in the following JSON format:
+    {
+      "salaryRanges": [
+        {"role": "Junior", "min": 50000, "max": 80000},
+        {"role": "Mid-level", "min": 80000, "max": 120000},
+        {"role": "Senior", "min": 120000, "max": 180000}
+      ],
+      "growthRate": 15.5,
+      "demandLevel": "High",
+      "topSkills": ["skill1", "skill2", "skill3"],
+      "marketOutlook": "Positive outlook with strong growth potential",
+      "keyTrends": ["trend1", "trend2", "trend3"],
+      "recommendedSkills": ["rec_skill1", "rec_skill2", "rec_skill3"]
+    }
+  `;
 
-  const result = await model.generateContent(prompt);
-  const response = result.response;
-  const text = response.text();
-  const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
-
-  return JSON.parse(cleanedText);
-};
+  try {
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+    const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
+    return JSON.parse(cleanedText);
+  } catch (error) {
+    console.error("Error generating insights:", error);
+    // Return default insights if AI generation fails
+    return {
+      salaryRanges: [
+        { role: "Junior", min: 50000, max: 80000 },
+        { role: "Mid-level", min: 80000, max: 120000 },
+        { role: "Senior", min: 120000, max: 180000 },
+      ],
+      growthRate: 10.0,
+      demandLevel: "Medium",
+      topSkills: ["Communication", "Problem Solving", "Teamwork"],
+      marketOutlook: "Stable market with growth opportunities",
+      keyTrends: ["Digital transformation", "Remote work", "Automation"],
+      recommendedSkills: ["Leadership", "Technical skills", "Adaptability"],
+    };
+  }
+}
 
 export async function getIndustryInsights() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
+    where: { id: session.user.id },
     include: {
       industryInsight: true,
     },
