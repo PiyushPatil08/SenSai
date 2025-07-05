@@ -28,12 +28,25 @@ export default async function DashboardPage() {
           <p className="text-muted-foreground">
             {error.message || "Failed to load dashboard data"}
           </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-          >
-            Try Again
-          </button>
+          <div className="text-sm text-red-500 bg-red-50 p-4 rounded-md">
+            <strong>Error Details:</strong><br/>
+            {error.stack || error.message}
+          </div>
+          <div className="space-x-4">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+            >
+              Try Again
+            </button>
+            <a 
+              href="/api/debug" 
+              target="_blank"
+              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md"
+            >
+              Debug Info
+            </a>
+          </div>
         </div>
       </div>
     );
