@@ -49,12 +49,17 @@ export default function ResumeBuilder({ initialContent }) {
     },
   });
 
-  const {
-    loading: isSaving,
-    fn: saveResumeFn,
-    data: saveResult,
-    error: saveError,
-  } = useFetch(saveResume);
+  const saveResumeClient = async (content) => {
+    const res = await fetch("/api/resume/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) throw new Error("Failed to save resume");
+    return await res.json();
+  };
+
+  const { loading: isSaving, fn: saveResumeFn, data: saveResult, error: saveError } = useFetch(saveResumeClient);
 
   // Watch form fields for preview updates
   const formValues = watch();
