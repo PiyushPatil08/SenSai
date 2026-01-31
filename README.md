@@ -1,4 +1,4 @@
-# 🤖 Sensai
+# 🤖 SensAI
 
 **AI Career Coach** is a full-stack, AI-powered career advancement platform designed to help users create resumes and cover letters, practice interviews, and plan career paths with personalized guidance. With smart AI integrations, career-specific insights, and interactive features, it empowers users to navigate their job-seeking journey confidently.
 
@@ -20,7 +20,7 @@
 
 ## 🔗 Live Preview
 
-👉 [AI Career Coach on Vercel](https://your-vercel-deployment-link.com)
+👉 [SensAI on Vercel](https://your-vercel-deployment-link.com)
 
 ---
 
