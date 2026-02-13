@@ -10,6 +10,7 @@ import {
   Loader2,
   Monitor,
   Save,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import MDEditor from "@uiw/react-md-editor";
@@ -17,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { saveResume } from "@/actions/resume";
+import { saveResume, improveWithAI } from "@/actions/resume";
 import { EntryForm } from "./entry-form";
 import useFetch from "@/hooks/use-fetch";
 import { useUser } from "@/components/clerk-replacements/useUser";
@@ -35,6 +36,7 @@ export default function ResumeBuilder({ initialContent }) {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(resumeSchema),
@@ -48,17 +50,12 @@ export default function ResumeBuilder({ initialContent }) {
     },
   });
 
-  const saveResumeClient = async (content) => {
-    const res = await fetch("/api/resume/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    });
-    if (!res.ok) throw new Error("Failed to save resume");
-    return await res.json();
-  };
-
-  const { loading: isSaving, fn: saveResumeFn, data: saveResult, error: saveError } = useFetch(saveResumeClient);
+  const {
+    loading: isSaving,
+    fn: saveResumeFn,
+    data: saveResult,
+    error: saveError,
+  } = useFetch(saveResume);
 
   // Watch form fields for preview updates
   const formValues = watch();
@@ -87,6 +84,38 @@ export default function ResumeBuilder({ initialContent }) {
       toast.error(saveError.message || "Failed to save resume");
     }
   }, [saveResult, saveError, isSaving]);
+
+  // AI Improvement Hook
+  const {
+    loading: isImproving,
+    fn: improveWithAIFn,
+    data: improvedContent,
+    error: improveError,
+  } = useFetch(improveWithAI);
+
+  // Handle AI result
+  useEffect(() => {
+    if (improvedContent && !isImproving) {
+      setValue("summary", improvedContent);
+      toast.success("Summary improved successfully!");
+    }
+    if (improveError) {
+      toast.error(improveError.message || "Failed to improve summary");
+    }
+  }, [improvedContent, improveError, isImproving, setValue]);
+
+  const handleImproveSummary = async () => {
+    const summary = watch("summary");
+    if (!summary) {
+      toast.error("Please enter a summary first");
+      return;
+    }
+
+    await improveWithAIFn({
+      current: summary,
+      type: "professional summary",
+    });
+  };
 
   const getContactMarkdown = () => {
     const { contactInfo } = formValues;
@@ -282,6 +311,25 @@ export default function ResumeBuilder({ initialContent }) {
               {errors.summary && (
                 <p className="text-sm text-red-500">{errors.summary.message}</p>
               )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleImproveSummary}
+                disabled={isImproving || !watch("summary")}
+              >
+                {isImproving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Improving...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Improve with AI
+                  </>
+                )}
+              </Button>
             </div>
 
             {/* Skills */}
