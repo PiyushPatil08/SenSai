@@ -6,14 +6,13 @@ import { redirect } from "next/navigation";
 import DashboardErrorFallback from "./_component/dashboard-error-fallback";
 
 export default async function DashboardPage() {
+  const { isOnboarded } = await getUserOnboardingStatus();
+
+  if (!isOnboarded) {
+    redirect("/onboarding");
+  }
+
   try {
-    const { isOnboarded } = await getUserOnboardingStatus();
-
-    // If not onboarded, redirect to onboarding page
-    if (!isOnboarded) {
-      redirect("/onboarding");
-    }
-
     const insights = await getIndustryInsights();
 
     return (

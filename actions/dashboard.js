@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 export async function generateAIInsights(industry) {
   // Check if GEMINI_API_KEY is available
@@ -40,12 +40,12 @@ export async function generateAIInsights(industry) {
     return JSON.parse(cleanedText);
   } catch (error) {
     console.error("Error generating insights:", error);
-    
+
     // Check if it's an API key error
     if (error.message?.includes('API_KEY') || error.message?.includes('authentication')) {
       throw new Error("AI service authentication failed. Please check your API key.");
     }
-    
+
     // Return default insights if AI generation fails
     return {
       salaryRanges: [

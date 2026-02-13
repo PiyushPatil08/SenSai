@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { revalidatePath } from "next/cache";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 export async function generateRoadmap(role) {
   try {
@@ -56,7 +56,7 @@ export async function generateRoadmap(role) {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     let roadmapData;
-    
+
     try {
       const text = response.text();
       const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
@@ -82,12 +82,12 @@ export async function generateRoadmap(role) {
     return roadmap;
   } catch (error) {
     console.error("Error generating roadmap:", error);
-    
+
     // Check if it's an API key error
     if (error.message?.includes('API_KEY') || error.message?.includes('authentication')) {
       throw new Error("AI service authentication failed. Please check your API key.");
     }
-    
+
     throw new Error(error.message || "Failed to generate roadmap");
   }
 }
@@ -99,7 +99,7 @@ export async function getRoadmaps() {
   while (retryCount < maxRetries) {
     try {
       console.log(`Attempting to get roadmaps (attempt ${retryCount + 1}/${maxRetries})`);
-      
+
       const session = await getServerSession(authOptions);
       if (!session?.user?.id) {
         console.error('Authentication failed: No userId found');
@@ -130,7 +130,7 @@ export async function getRoadmaps() {
 
     } catch (error) {
       console.error(`Error in getRoadmaps (attempt ${retryCount + 1}):`, error);
-      
+
       if (error.message.includes('Unauthorized') || error.message.includes('User not found')) {
         throw error; // Don't retry auth/user errors
       }
