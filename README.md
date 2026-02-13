@@ -20,7 +20,7 @@
 
 ## 🔗 Live Preview
 
-👉 [SensAI on Vercel](https://your-vercel-deployment-link.com)
+👉 [SensAI on Vercel](https://sensai-black-kappa.vercel.app/)
 
 ---
 
